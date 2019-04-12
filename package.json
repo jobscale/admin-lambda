@@ -2,17 +2,19 @@
   "name": "admin-lambda",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "task/index.js",
   "scripts": {
+    "docker": "docker run --rm -v \"$(pwd)/task\":/var/task lambci/lambda:nodejs8.10 index.handler $(printf '%s' $(cat data.json))",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "aws-sdk": "^2.437.0",
-    "aws-serverless-express": "^3.3.6",
-    "body-parser": "^1.18.3",
-    "express": "^4.16.4"
+  "devDependencies": {
+    "eslint": "^5.16.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-plugin-import": "^2.16.0"
   }
 }
