@@ -48,19 +48,23 @@ app.get('/fetch/*', (req, res) => {
 
 app.post('/fetch', (req, res) => {
   // Add your code here
-  logger.log({ HEADERS: req.headers });
-  const { event } = global.Self;
+  const { event } = req.apiGateway;
+  logger.info({ event });
   new User(event).getUser()
-    .then(users => {
-      logger.log({ User: JSON.stringify(users) });
-      res.json({ success: 'post call succeed!', url: req.url, body: req.body });
-    })
-    .catch(e => {
-      logger.error(JSON.stringify(
-        { message: e.message, stack: e.stack }, null, 2,
-      ));
-      res.json({ error: e.message, url: req.url, body: req.body });
+  .then(users => {
+    logger.info({ Users: JSON.stringify(users) });
+    res.json({
+      success: 'post call succeed!', url: req.url,
     });
+  })
+  .catch(e => {
+    logger.error(JSON.stringify(
+      { message: e.message, stack: e.stack }, null, 2,
+    ));
+    res.json({
+      error: e.message, url: req.url,
+    });
+  });
 });
 
 app.post('/fetch/*', (req, res) => {

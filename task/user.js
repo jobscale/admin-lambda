@@ -1,7 +1,5 @@
 const AWS = require('aws-sdk');
-
 const logger = console;
-
 class User {
   constructor(event) {
     AWS.config.update({ region: 'us-east-2' });
@@ -27,7 +25,6 @@ class User {
     };
     this.provider = new AWS.CognitoIdentityServiceProvider();
   }
-
   promise() {
     const promise = {};
     promise.instance = new Promise((...argv) => {
@@ -35,7 +32,6 @@ class User {
     });
     return promise;
   }
-
   getUser(attribute) {
     const promise = this.promise();
     if (!attribute) attribute = 'custom:attribute';
@@ -52,7 +48,6 @@ class User {
     });
     return promise.instance;
   }
-
   updateAttributes(attributes) {
     const promise = this.promise();
     this.provider.adminUpdateUserAttributes({
@@ -68,7 +63,6 @@ class User {
     return promise.instance;
   }
 }
-
 module.exports = {
   User,
 };

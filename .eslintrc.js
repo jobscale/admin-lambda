@@ -15,6 +15,7 @@ module.exports = {
   rules: {
     "arrow-parens": "off",
     "no-param-reassign": "off",
-    "class-methods-use-this": "off"
+    "class-methods-use-this": "off",
+    "import/newline-after-import": "off",
   },
 };
