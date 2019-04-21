@@ -50,17 +50,40 @@ app.post('/fetch', (req, res) => {
   // Add your code here
   logger.log({ HEADERS: req.headers });
   const { event } = global.Self;
-  new User(event).getUser()
-    .then(users => {
-      logger.log({ User: JSON.stringify(users) });
-      res.json({ success: 'post call succeed!', url: req.url, body: req.body });
-    })
-    .catch(e => {
-      logger.error(JSON.stringify(
-        { message: e.message, stack: e.stack }, null, 2,
-      ));
-      res.json({ error: e.message, url: req.url, body: req.body });
-    });
+  const user = new User(event);
+  const run = {
+    getUser() {
+      return user.getUser()
+      .then(users => {
+        logger.log({ Users: JSON.stringify(users) });
+        res.json({ success: 'post call succeed!', url: req.url, body: req.body });
+      });
+    },
+    getUserInGroup() {
+      return user.getUserInGroup()
+      .then(users => {
+        logger.log({ Users: JSON.stringify(users) });
+        res.json({ success: 'post call succeed!', url: req.url, body: req.body });
+      });
+    },
+    adminUpdateUserAttributes() {
+      return user.adminUpdateUserAttributes()
+      .then(users => {
+        logger.log({ Users: JSON.stringify(users) });
+        res.json({ success: 'post call succeed!', url: req.url, body: req.body });
+      });
+    },
+    start() {
+      return this.getUser()
+      .catch(e => {
+        logger.error(JSON.stringify(
+          { message: e.message, stack: e.stack }, null, 2,
+        ));
+        res.json({ error: e.message, url: req.url, body: req.body });
+      });
+    },
+  };
+  run.start();
 });
 
 app.post('/fetch/*', (req, res) => {

@@ -1,5 +1,4 @@
 const AWS = require('aws-sdk');
-
 const logger = console;
 
 class User {
@@ -12,8 +11,10 @@ class User {
     const userPoolIdParts = parts[parts.length - 3].split('/');
     const userPoolId = userPoolIdParts[userPoolIdParts.length - 1];
     const userPoolUserId = parts[parts.length - 1];
-    const accessToken = event.headers['x-amz-security-token'];
+    const accessToken = event.body && JSON.parse(event.body).accessToken;
     this.authData = {
+      groupName: 'admin',
+      userName: userPoolUserId,
       cognitoIdentityPoolId,
       userArn,
       userPoolId,
@@ -22,50 +23,65 @@ class User {
       filter: `sub = "${userPoolUserId}"`,
     };
     logger.info({ authData: this.authData });
-    this.options = {
-      accessToken: this.authData.accessToken,
+    const params = {
+      AccessToken: this.authData.accessToken,
     };
-    this.provider = new AWS.CognitoIdentityServiceProvider();
+    logger.info({ params });
+    const { CognitoIdentityServiceProvider } = AWS;
+    this.provider = new CognitoIdentityServiceProvider({ params });
   }
 
-  promise() {
+  promise(...argv) {
     const promise = {};
     promise.instance = new Promise((...argv) => {
       [promise.resolve, promise.reject] = argv;
     });
-    return promise;
+    const name = argv.shift();
+    this.provider[name](...argv, (e, data) => {
+      if (e) {
+        logger.error({ error: `[${name}] ${e.message}` });
+        return promise.reject(e);
+      }
+      logger.info({ success: `[${name}] ${JSON.stringify(data, null, 2)}` })
+      promise.resolve(data);
+    });
+    return promise.instance;
   }
 
-  getUser(attribute) {
-    const promise = this.promise();
-    if (!attribute) attribute = 'custom:attribute';
-    this.provider.getUser({}, (e, user) => {
-      if (e) {
-        promise.reject(e);
-        return;
-      }
-      user.UserAttributes.forEach((store) => {
-        if (store.Name !== attribute) return;
-        promise.resolve(store);
+  getUser() {
+    const params = {};
+    return this.promise(
+      'getUser', params,
+    )
+    .then(user => {
+      user.UserAttributes.forEach(store => {
+        logger.info({ store });
       });
-      promise.reject(`'${attribute}' not found.`);
     });
-    return promise.instance;
   }
 
-  updateAttributes(attributes) {
-    const promise = this.promise();
-    this.provider.adminUpdateUserAttributes({
-      Username: this.options.Username,
-      UserAttributes: attributes,
-    }, (e, res) => {
-      if (e) {
-        promise.reject(e);
-        return;
-      }
-      promise.resolve(res);
-    });
-    return promise.instance;
+  getUserInGroup() {
+    const params = {
+      GroupName: this.authData.groupName,
+      UserPoolId: this.authData.userPoolId,
+    };
+    return this.promise(
+      'listUsersInGroup', params,
+    );
+  }
+
+  adminUpdateUserAttributes() {
+    const params = {
+      UserAttributes: [{
+        Name: 'attribute',
+        Value: JSON.stringify({ count: 0 }),
+      }],
+      UserPoolId: this.authData.userPoolId,
+      Username: this.authData.userName,
+    };
+    return this.promise(
+      'adminUpdateUserAttributes', params,
+    );
   }
 }
 
