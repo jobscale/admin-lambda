@@ -4,7 +4,7 @@
   "description": "",
   "main": "task/index.js",
   "scripts": {
-    "docker": "docker run --rm -v \"$(pwd)/task\":/var/task lambci/lambda:nodejs8.10 index.handler $(printf '%s' $(cat data.json))",
+    "docker": "docker run --rm -v \"$(pwd)/task\":/var/task lambci/lambda:nodejs8.10 index.handler $(printf '%s' $(cat event.json))",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "echo \"Error: no test specified\" && exit 1"
