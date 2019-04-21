@@ -2,7 +2,8 @@ const AWS = require('aws-sdk');
 class User {
   constructor(event) {
     const { CognitoIdentityServiceProvider } = AWS;
-    const { accessToken } = JSON.parse(event.body);
+    const body = JSON.parse(event.body);
+    const { accessToken } = body;
     AWS.config.update({ region: 'us-east-2' });
     this.provider = new CognitoIdentityServiceProvider({ accessToken });
     this.config(event);
