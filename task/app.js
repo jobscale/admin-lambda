@@ -16,7 +16,6 @@ const { User } = require('./user');
 
 // declare a new express app
 const app = express();
-const logger = console;
 app.use(bodyParser.json());
 app.use(awsServerlessExpressMiddleware.eventContext());
 

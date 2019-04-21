@@ -1,9 +1,13 @@
 const AWS = require('aws-sdk');
-const logger = console;
 class User {
   constructor(event) {
-    AWS.config.update({ region: 'us-east-2' });
     const { CognitoIdentityServiceProvider } = AWS;
+    const { accessToken } = JSON.parse(event.body);
+    AWS.config.update({ region: 'us-east-2' });
+    this.provider = new CognitoIdentityServiceProvider({ accessToken });
+    this.config(event);
+  }
+  config(event) {
     const { identity } = event.requestContext;
     const { cognitoAuthenticationProvider } = identity;
     const { cognitoIdentityPoolId, userArn } = identity;
@@ -11,17 +15,14 @@ class User {
     const userPoolIdParts = parts[parts.length - 3].split('/');
     const userPoolId = userPoolIdParts[userPoolIdParts.length - 1];
     const userPoolUserId = parts[parts.length - 1];
-    const { accessToken } = JSON.parse(event.body);
     this.authData = {
       cognitoIdentityPoolId,
       userArn,
       userPoolId,
       userPoolUserId,
-      accessToken,
       filter: `sub = "${userPoolUserId}"`,
     };
     logger.info({ authData: this.authData });
-    this.provider = new CognitoIdentityServiceProvider();
   }
   promise(...argv) {
     const promise = {};
