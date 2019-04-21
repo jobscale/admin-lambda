@@ -3,6 +3,7 @@ const logger = console;
 class User {
   constructor(event) {
     AWS.config.update({ region: 'us-east-2' });
+    const { CognitoIdentityServiceProvider } = AWS;
     const { identity } = event.requestContext;
     const { cognitoAuthenticationProvider } = identity;
     const { cognitoIdentityPoolId, userArn } = identity;
@@ -10,7 +11,7 @@ class User {
     const userPoolIdParts = parts[parts.length - 3].split('/');
     const userPoolId = userPoolIdParts[userPoolIdParts.length - 1];
     const userPoolUserId = parts[parts.length - 1];
-    const accessToken = event.headers['x-amz-security-token'];
+    const { accessToken } = JSON.parse(event.body);
     this.authData = {
       cognitoIdentityPoolId,
       userArn,
@@ -20,47 +21,40 @@ class User {
       filter: `sub = "${userPoolUserId}"`,
     };
     logger.info({ authData: this.authData });
-    this.options = {
-      accessToken: this.authData.accessToken,
-    };
-    this.provider = new AWS.CognitoIdentityServiceProvider();
+    this.provider = new CognitoIdentityServiceProvider();
   }
-  promise() {
+  promise(...argv) {
     const promise = {};
     promise.instance = new Promise((...argv) => {
       [promise.resolve, promise.reject] = argv;
     });
-    return promise;
-  }
-  getUser(attribute) {
-    const promise = this.promise();
-    if (!attribute) attribute = 'custom:attribute';
-    this.provider.getUser({}, (e, user) => {
+    const name = argv.shift();
+    this.provider[name](...argv, (e, res) => {
       if (e) {
-        promise.reject(e);
-        return;
+        logger.error({ name, error: e.message });
+        return promise.reject(e);
       }
-      user.UserAttributes.forEach((store) => {
-        if (store.Name !== attribute) return;
-        promise.resolve(store);
-      });
-      promise.reject(`'${attribute}' not found.`);
-    });
-    return promise.instance;
-  }
-  updateAttributes(attributes) {
-    const promise = this.promise();
-    this.provider.adminUpdateUserAttributes({
-      Username: this.options.Username,
-      UserAttributes: attributes,
-    }, (e, res) => {
-      if (e) {
-        promise.reject(e);
-        return;
-      }
+      logger.info({ name, res: JSON.stringify(res, null, 2) });
       promise.resolve(res);
     });
     return promise.instance;
+  }
+  getUser() {
+    const params = {};
+    return this.promise('getUser', params)
+    .then(users => {
+      users.UserAttributes.forEach(store => {
+        logger.info({ store });
+      });
+    });
+  }
+  updateAttributes() {
+    const attributes = [];
+    const params = {
+      Username: this.authData.Username,
+      UserAttributes: attributes,
+    };
+    return this.promise('updateAttributes', params);
   }
 }
 module.exports = {

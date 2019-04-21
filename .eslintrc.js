@@ -17,5 +17,9 @@ module.exports = {
     "no-param-reassign": "off",
     "class-methods-use-this": "off",
     "import/newline-after-import": "off",
+    "lines-between-class-members": "off",
+    "consistent-return": "off",
+    "no-shadow": "off",
+    indent: ['error', 2, { "SwitchCase": 0, MemberExpression: 0 }],
   },
 };
