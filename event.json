@@ -130,7 +130,7 @@
         },
         "domainName": "cx2hdych56.execute-api.us-east-2.amazonaws.com",
         "apiId": "cx2hdych56"
-    },
-    "body": null,
+    },\
+    "body": "{\"accessToken\":\"<accessToken>\"}",
     "isBase64Encoded": false
 }
