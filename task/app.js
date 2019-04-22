@@ -49,19 +49,23 @@ app.post('/fetch', (req, res) => {
   // Add your code here
   const { event } = req.apiGateway;
   event.body = req.body;
-  new User(event).listUsers()
-  .then(user => {
-    logger.info({ user });
-    res.json({
-      success: 'post call succeed!', url: req.url,
-    });
-  })
-  .catch(e => {
-    logger.error(JSON.stringify(
-      { message: e.message, stack: e.stack }, null, 2,
-    ));
-    res.json({
-      error: e.message, url: req.url,
+  const user = new User();
+  user.setup(event)
+  .then(() => {
+    user.listUsers()
+    .then(data => {
+      logger.info({ data });
+      res.json({
+        success: 'post call succeed!', url: req.url,
+      });
+    })
+    .catch(e => {
+      logger.error(JSON.stringify(
+        { message: e.message, stack: e.stack }, null, 2,
+      ));
+      res.json({
+        error: e.message, url: req.url,
+      });
     });
   });
 });

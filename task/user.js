@@ -1,16 +1,25 @@
-/*global logger  */
 const AWS = require('aws-sdk');
+const { CognitoIdentityServiceProvider } = AWS;
+const { Config } = require('./config');
 class User {
-  constructor(event) {
-    const { CognitoIdentityServiceProvider } = AWS;
+  setup(event) {
     const { accessToken } = event.body;
-    logger.info({ AccessToken: accessToken });
     AWS.config.update({ region: 'us-east-2' });
     const params = { AccessToken: accessToken };
-    this.provider = new CognitoIdentityServiceProvider({ params });
-    this.config(event);
+    return this.config({ params })
+    .then(() => this.initialize(event));
   }
-  config(event) {
+  config(options) {
+    const config = new Config();
+    return config.setup(options)
+    .then(() => {
+      options.accessKeyId = config.access;
+      options.secretAccessKey = config.secret;
+      logger.info(options);
+      this.provider = new CognitoIdentityServiceProvider(options);
+    });
+  }
+  initialize(event) {
     const { identity } = event.requestContext;
     const { cognitoAuthenticationProvider } = identity;
     const { cognitoIdentityPoolId, userArn } = identity;
@@ -55,9 +64,10 @@ class User {
       UserPoolId: this.authData.userPoolId,
     };
     return this.promise('listUsers', params)
-    .then(users => {
-      logger.info({ users });
-      return users;
+    .then(data => {
+      const { Users } = data;
+      logger.info(Users);
+      return Users;
     });
   }
   updateAttributes() {
