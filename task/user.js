@@ -1,11 +1,13 @@
+/*global logger  */
 const AWS = require('aws-sdk');
 class User {
   constructor(event) {
     const { CognitoIdentityServiceProvider } = AWS;
-    const body = JSON.parse(event.body);
-    const { accessToken } = body;
+    const { accessToken } = event.body;
+    logger.info({ AccessToken: accessToken });
     AWS.config.update({ region: 'us-east-2' });
-    this.provider = new CognitoIdentityServiceProvider({ accessToken });
+    const params = { AccessToken: accessToken };
+    this.provider = new CognitoIdentityServiceProvider({ params });
     this.config(event);
   }
   config(event) {
@@ -26,28 +28,36 @@ class User {
     logger.info({ authData: this.authData });
   }
   promise(...argv) {
-    const promise = {};
-    promise.instance = new Promise((...argv) => {
-      [promise.resolve, promise.reject] = argv;
-    });
     const name = argv.shift();
-    this.provider[name](...argv, (e, res) => {
-      if (e) {
-        logger.error({ name, error: e.message });
-        return promise.reject(e);
-      }
-      logger.info({ name, res: JSON.stringify(res, null, 2) });
-      promise.resolve(res);
+    return this.provider[name](argv.shift())
+    .promise()
+    .then(data => {
+      logger.info({ name, data });
+      return data;
+    })
+    .catch(e => {
+      logger.error({ name, error: e.message });
+      throw e;
     });
-    return promise.instance;
   }
   getUser() {
     const params = {};
     return this.promise('getUser', params)
-    .then(users => {
-      users.UserAttributes.forEach(store => {
+    .then(user => {
+      user.UserAttributes.forEach(store => {
         logger.info({ store });
       });
+      return user;
+    });
+  }
+  listUsers() {
+    const params = {
+      UserPoolId: this.authData.userPoolId,
+    };
+    return this.promise('listUsers', params)
+    .then(users => {
+      logger.info({ users });
+      return users;
     });
   }
   updateAttributes() {

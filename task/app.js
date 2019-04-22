@@ -48,10 +48,10 @@ app.get('/fetch/*', (req, res) => {
 app.post('/fetch', (req, res) => {
   // Add your code here
   const { event } = req.apiGateway;
-  logger.info({ event });
-  new User(event).getUser()
-  .then(users => {
-    logger.info({ Users: JSON.stringify(users) });
+  event.body = req.body;
+  new User(event).listUsers()
+  .then(user => {
+    logger.info({ user });
     res.json({
       success: 'post call succeed!', url: req.url,
     });
