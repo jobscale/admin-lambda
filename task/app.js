@@ -51,21 +51,19 @@ app.post('/fetch', (req, res) => {
   event.body = req.body;
   const user = new User();
   user.setup(event)
-  .then(() => {
-    user.listUsers()
-    .then(data => {
-      logger.info({ data });
-      res.json({
-        success: 'post call succeed!', url: req.url,
-      });
-    })
-    .catch(e => {
-      logger.error(JSON.stringify(
-        { message: e.message, stack: e.stack }, null, 2,
-      ));
-      res.json({
-        error: e.message, url: req.url,
-      });
+  .then(() => user.getUser())
+  .then(data => {
+    logger.info({ data });
+    res.json({
+      success: 'post call succeed!', url: req.url,
+    });
+  })
+  .catch(e => {
+    logger.error(JSON.stringify(
+      { message: e.message, stack: e.stack }, null, 2,
+    ));
+    res.json({
+      error: e.message, url: req.url,
     });
   });
 });
