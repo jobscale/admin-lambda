@@ -52,6 +52,7 @@ app.post('/fetch', (req, res) => {
   const user = new User();
   user.setup(event)
   .then(() => user.getUser())
+  .then(() => user.listUsers())
   .then(data => {
     logger.info({ data });
     res.json({
