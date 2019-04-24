@@ -6,6 +6,12 @@ cd $_
 npm i
 cd task
 npm i
+echo '\
+module.exports = {
+  ACCESS: '<access>',
+  SECRET: '<secret>',
+};
+' > env.js
 cd -
 vi event.json
 npm run docker

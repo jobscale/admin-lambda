@@ -4,5 +4,6 @@ node_modules/
 package-lock.json
 event.json
 task/config.js
-
 task/env.js
+env-file
+.event.json
