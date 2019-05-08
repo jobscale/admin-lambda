@@ -7,4 +7,4 @@ task/config.js
 task/env.js
 env-file
 .event.json
-.guest.json
+task/.guest.json

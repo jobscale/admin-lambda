@@ -62,11 +62,11 @@ class User {
       return result;
     });
   }
-  async adminUpdateUserAttributes(user) {
+  async adminUpdateUserAttributes(data) {
     const params = {
-      Username: user.Username,
+      Username: data.Username,
       UserPoolId: this.authData.userPoolId,
-      UserAttributes: user.Attributes,
+      UserAttributes: data.Attributes,
     };
     return this.provider.adminUpdateUserAttributes(params).promise()
     .then(() => logger.info(params));
