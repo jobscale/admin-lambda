@@ -7,6 +7,8 @@ module.exports = {
   globals: {
     Atomics: 'readonly',
     SharedArrayBuffer: 'readonly',
+    require: 'readonly',
+    fetch: 'readonly',
     logger: 'readonly',
   },
   parserOptions: {

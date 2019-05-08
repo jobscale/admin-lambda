@@ -1,25 +1,8 @@
 const AWS = require('aws-sdk');
-const { CognitoIdentityServiceProvider } = AWS;
-const { Config } = require('./config');
 class User {
-  setup(event) {
-    const { accessToken } = event.body;
+  constructor(event) {
     AWS.config.update({ region: 'us-east-2' });
-    const params = { AccessToken: accessToken };
-    return this.config({ params })
-    .then(() => this.initialize(event));
-  }
-  config(options) {
-    const config = new Config();
-    return config.setup(options)
-    .then(() => {
-      options.accessKeyId = config.access;
-      options.secretAccessKey = config.secret;
-      logger.info(options);
-      this.provider = new CognitoIdentityServiceProvider(options);
-    });
-  }
-  initialize(event) {
+    const { accessToken } = event.body;
     const { identity } = event.requestContext;
     const { cognitoAuthenticationProvider } = identity;
     const { cognitoIdentityPoolId, userArn } = identity;
@@ -28,55 +11,65 @@ class User {
     const userPoolId = userPoolIdParts[userPoolIdParts.length - 1];
     const userPoolUserId = parts[parts.length - 1];
     this.authData = {
+      accessToken,
       cognitoIdentityPoolId,
       userArn,
       userPoolId,
       userPoolUserId,
       filter: `sub = "${userPoolUserId}"`,
     };
-    logger.info({ authData: this.authData });
   }
-  promise(...argv) {
-    const name = argv.shift();
-    return this.provider[name](argv.shift())
-    .promise()
-    .then(data => {
-      logger.info({ name, data });
-      return data;
-    })
-    .catch(e => {
-      logger.error({ name, error: e.message });
-      throw e;
+  async setup() {
+    if (this.provider) throw Error('duplicate provider.');
+    const { Config } = require('./config');
+    const config = new Config();
+    config.authData = this.authData;
+    const options = {
+      params: {
+        AccessToken: this.authData.accessToken,
+      },
+    };
+    return config.setup(options)
+    .then(() => {
+      const { CognitoIdentityServiceProvider } = AWS;
+      options.accessKeyId = config.access;
+      options.secretAccessKey = config.secret;
+      this.provider = new CognitoIdentityServiceProvider(options);
     });
   }
-  getUser() {
+  async getUser() {
     const params = {};
-    return this.promise('getUser', params)
-    .then(user => {
-      user.UserAttributes.forEach(store => {
-        logger.info({ store });
-      });
-      return user;
+    return this.provider.getUser(params).promise()
+    .then(data => {
+      this.authData.Username = data.Username;
+      return data;
     });
   }
-  listUsers() {
+  async listUsers() {
     const params = {
       UserPoolId: this.authData.userPoolId,
     };
-    return this.promise('listUsers', params)
+    return this.provider.listUsers(params).promise()
     .then(data => {
+      let result = undefined;
       const { Users } = data;
-      logger.info(Users);
-      return Users;
+      Users.forEach(user => {
+        if (user.Username === this.authData.Username) {
+          result = user;
+        }
+      });
+      logger.info(result);
+      return result;
     });
   }
-  updateAttributes() {
-    const attributes = [];
+  async adminUpdateUserAttributes(user) {
     const params = {
-      Username: this.authData.Username,
-      UserAttributes: attributes,
+      Username: user.Username,
+      UserPoolId: this.authData.userPoolId,
+      UserAttributes: user.Attributes,
     };
-    return this.promise('updateAttributes', params);
+    return this.provider.adminUpdateUserAttributes(params).promise()
+    .then(() => logger.info(params));
   }
 }
 module.exports = {

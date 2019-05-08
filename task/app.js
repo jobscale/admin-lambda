@@ -26,6 +26,19 @@ app.use((req, res, next) => {
   next();
 });
 
+const fronNameValue = list => {
+  const result = {};
+  list.forEach(item => {
+    result[item.Name] = item.Value;
+  });
+  return result;
+};
+const toNameValue = items => {
+  return Object.keys(items).map(key => ({
+    Name: key,
+    Value: items[key],
+  }));
+};
 
 /** ********************
  * Example get method *
@@ -49,12 +62,25 @@ app.post('/fetch', (req, res) => {
   // Add your code here
   const { event } = req.apiGateway;
   event.body = req.body;
-  const user = new User();
-  user.setup(event)
+  const user = new User(event);
+  user.setup()
   .then(() => user.getUser())
   .then(() => user.listUsers())
   .then(data => {
-    logger.info({ data });
+    const attributes = fronNameValue(data.Attributes);
+    const result = {
+      'custom:attribute': attributes['custom:attribute'],
+    };
+    if (result['custom:attribute']) {
+      result['custom:attribute'] = (result['custom:attribute'] - 1).toString();
+    } else {
+      result['custom:attribute'] = (10).toString();
+    }
+    data.Attributes = toNameValue(result);
+    return data;
+  })
+  .then(data => user.adminUpdateUserAttributes(data))
+  .then(() => {
     res.json({
       success: 'post call succeed!', url: req.url,
     });
