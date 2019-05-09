@@ -20,7 +20,7 @@ class User {
     };
   }
   async setup() {
-    if (this.provider) throw Error('duplicate provider.');
+    if (this.provider) throw new Error('duplicate provider failed.');
     const { Config } = require('./config');
     const config = new Config();
     config.authData = this.authData;
@@ -35,15 +35,12 @@ class User {
       options.accessKeyId = config.access;
       options.secretAccessKey = config.secret;
       this.provider = new CognitoIdentityServiceProvider(options);
+      this.authUser = config.authUser;
+      this.authData.Username = this.authUser.Username;
     });
   }
   async getUser() {
-    const params = {};
-    return this.provider.getUser(params).promise()
-    .then(data => {
-      this.authData.Username = data.Username;
-      return data;
-    });
+    return this.authUser;
   }
   async listUsers() {
     const params = {
@@ -51,22 +48,15 @@ class User {
     };
     return this.provider.listUsers(params).promise()
     .then(data => {
-      let result = undefined;
       const { Users } = data;
-      Users.forEach(user => {
-        if (user.Username === this.authData.Username) {
-          result = user;
-        }
-      });
-      logger.info(result);
-      return result;
+      return Users;
     });
   }
   async adminUpdateUserAttributes(data) {
     const params = {
       Username: data.Username,
       UserPoolId: this.authData.userPoolId,
-      UserAttributes: data.Attributes,
+      UserAttributes: data.UserAttributes,
     };
     return this.provider.adminUpdateUserAttributes(params).promise()
     .then(() => logger.info(params));
