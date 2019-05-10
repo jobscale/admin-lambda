@@ -2,9 +2,7 @@ node_modules/
 .c9/
 .idea/
 package-lock.json
-event.json
-task/config.js
-task/env.js
 env-file
 .event.json
-task/app/.guest.json
+.env.js
+.guest.json
