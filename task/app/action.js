@@ -1,4 +1,5 @@
 const { User } = require('./user');
+const { Service } = require('./service');
 
 class Action {
   fromNameValue(list) {
@@ -43,9 +44,11 @@ class Action {
       return update.data;
     })
     .then(data => user.adminUpdateUserAttributes(data))
-    .then(() => {
-      res.json({
-        success: 'post call succeed!', url: req.url,
+    .then(() => new Service().generateClientSSL())
+    .then(data => {
+      logger.info(data.stdout.toString());
+      res.sendFile('/tmp/sslGen/client.crt', e => {
+        if (e) throw e;
       });
     })
     .catch(e => {
