@@ -1,0 +1,22 @@
+#!/bin/bash
+
+. scripts/config
+
+main() {
+  echo '###################################'
+  echo "hostname: $(hostname)"
+  id
+  bash -c "which openssl"
+  echo '################################### /bin'
+  ls /bin | xargs
+  echo '################################### /usr/bin'
+  ls /usr/bin | xargs
+  echo '###################################'
+  rm -fr $directory
+  mkdir -p $directory
+  scripts/ssl-keygen-server.sh
+  scripts/ssl-keygen-client.sh
+  ls -l $directory
+  cat $directory/client.crt
+}
+main 2>&1
