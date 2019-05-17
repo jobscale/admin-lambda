@@ -14,9 +14,12 @@ main() {
   echo '###################################'
   rm -fr $directory
   mkdir -p $directory
-  scripts/ssl-keygen-server.sh
+# scripts/ssl-keygen-server.sh
+  cp scripts/ssl.zip $directory
+  cd $directory
+  unzip ssl
+  cd -
   scripts/ssl-keygen-client.sh
   ls -l $directory
-  cat $directory/client.crt
 }
 main 2>&1

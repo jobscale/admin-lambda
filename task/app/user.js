@@ -1,4 +1,5 @@
 const AWS = require('aws-sdk');
+
 class User {
   constructor(event) {
     AWS.config.update({ region: 'us-east-2' });
@@ -59,7 +60,7 @@ class User {
       UserAttributes: data.UserAttributes,
     };
     return this.provider.adminUpdateUserAttributes(params).promise()
-    .then(() => logger.info(params));
+    .then(() => logger.info(params) || params);
   }
 }
 module.exports = {
